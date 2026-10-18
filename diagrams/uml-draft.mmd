@@ -1,0 +1,100 @@
+classDiagram
+    class User {
+        +str username
+        +str email
+        +str password
+        +List~Task~ tasks
+        +List~Pet~ pets
+        +List~Schedule~ schedules
+        +getUsername() str
+        +setUsername(username: str) void
+        +getEmail() str
+        +setEmail(email: str) void
+        +getPassword() str
+        +setPassword(password: str) void
+        +getTasks() List~Task~
+        +setTasks(tasks: List~Task~) void
+        +getPets() List~Pet~
+        +setPets(pets: List~Pet~) void
+        +getSchedules() List~Schedule~
+        +setSchedules(schedules: List~Schedule~) void
+        +addTask(task: Task) void
+        +removeTask(task: Task) void
+        +addPet(pet: Pet) void
+        +removePet(pet: Pet) void
+        +addSchedule(schedule: Schedule) void
+        +removeSchedule(schedule: Schedule) void
+    }
+
+    class Task {
+        +str title
+        +str desc
+        +time duration
+        +int priority
+        +List~Pet~ pets
+        +getTitle() str
+        +setTitle(title: str) void
+        +getDesc() str
+        +setDesc(desc: str) void
+        +getDuration() time
+        +setDuration(duration: time) void
+        +getPriority() int
+        +setPriority(priority: int) void
+        +getPets() List~Pet~
+        +setPets(pets: List~Pet~) void
+        +addPet(pet: Pet) void
+        +removePet(pet: Pet) void
+    }
+
+    class Pet {
+        +str name
+        +str breed
+        +str age
+        +str healthConditions
+        +str medications
+        +getName() str
+        +setName(name: str) void
+        +getBreed() str
+        +setBreed(breed: str) void
+        +getAge() str
+        +setAge(age: str) void
+        +getHealthConditions() str
+        +setHealthConditions(healthConditions: str) void
+        +getMedications() str
+        +setMedications(medications: str) void
+    }
+
+    class Schedule {
+        +str title
+        +str desc
+        +time startTime
+        +time endTime
+        +time totalTime
+        +time availableTime
+        +List~Task~ tasks
+        +getTitle() str
+        +setTitle(title: str) void
+        +getDesc() str
+        +setDesc(desc: str) void
+        +getStartTime() time
+        +setStartTime() time
+        +getEndTime() time
+        +setEndTime() time
+        +getTotalTime() time
+        +setTotalTime(totalTime: time) void
+        +getAvailableTime() time
+        +setAvailableTime(availableTime: time) void
+        +getTasks() List~Task~
+        +setTasks(tasks: List~Task~) void
+        +addTask(task: Task) void
+        +removeTask(task: Task) void
+        +calcTimeAvailable() time
+        +calcTotalTime() time
+        +generateSchedule() void
+    }
+
+    User "1" --> "*" Task : has
+    User "1" --> "*" Pet : has
+    User "1" --> "*" Schedule : has
+    Schedule "1" o-- "*" Task : contains
+    Task "*" --> "*" Pet : contains
