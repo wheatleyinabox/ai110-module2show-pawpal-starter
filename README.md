@@ -44,51 +44,48 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+Output from the CLI demo (`python main.py`), Step 4. Tasks are placed back to back from the start of the schedule window, in priority order (1 first):
 
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+Step 4: Schedule - Today (08:00-20:00)
+  08:00-08:30  Morning walk
+  08:30-08:35  Give joint supplement
+  08:35-08:50  Clean litter box
+  08:50-09:35  Playtime
+  Total time:     95 min
+  Available time: 625 min
+  Unscheduled:    0
 ```
 
 ## 🧪 Testing PawPal+
 
+There is no pytest suite yet. For now, the scheduling behavior is checked with the guided CLI demo:
+
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python main.py
 ```
 
-Sample test output:
-
-```
-# Paste your pytest output here
-```
+It walks through creating a user, pets and tasks, generating a schedule, shrinking the window so a task no longer fits, and three edge cases (no tasks, a task longer than the whole window, and tasks with equal priority).
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
-
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Task sorting | `Schedule.generate_schedule` | Sorted by priority, lowest number first. Ties keep the order they were entered in. |
+| Filtering | `Schedule.generate_schedule`, `Schedule.get_unscheduled_tasks` | A task that would run past the end of the window is skipped and listed as unscheduled. Shorter tasks after it can still fit. |
+| Conflict handling | `Schedule.generate_schedule` | Tasks are placed back to back, so time slots never overlap. |
+| Time totals | `Schedule.get_total_time`, `Schedule.get_available_time` | Calculated from the scheduled tasks (in minutes) instead of stored. |
+| Recurring tasks | | Not implemented. |
 
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. **User:** create a `User` with a username, email and password.
+2. **Pets:** add pets to the user, each with a breed, age, health conditions and medications.
+3. **Tasks:** create tasks with a duration in minutes and a priority, and link each task to one or more pets. Their start and end times stay empty until a schedule is generated.
+4. **Schedule:** create a schedule (default window 8am to 8pm) and call `generate_schedule` with the user's tasks. Tasks get start and end times in priority order.
+5. **Tight window:** shrink the window to 8am to 9am and regenerate. A task that no longer fits goes to the unscheduled list and its times reset to empty.
+6. **Edge cases:** no tasks, a task longer than the whole window, and equal priorities.
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
