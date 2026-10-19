@@ -163,9 +163,14 @@ class ScheduledTask:
     task: Task
     start_time: time
     end_time: time
+    # Why the scheduler put it here, written when it was placed.
+    reason: str = ""
 
     def get_task(self) -> Task:
         return self.task
+
+    def get_reason(self) -> str:
+        return self.reason
 
     def get_start_time(self) -> time:
         return self.start_time
@@ -218,6 +223,10 @@ class Schedule:
     conflicts: list[tuple[Task, Task]] = field(default_factory=list)
     # The day this schedule is for. None means "plan every task I'm given".
     plan_date: date | None = None
+    # Why each unscheduled task was left out (keyed by id(task)), and which tasks
+    # were skipped because they aren't due on plan_date. Filled by generate_schedule.
+    unscheduled_reasons: dict[int, str] = field(default_factory=dict, repr=False)
+    not_due_tasks: list[Task] = field(default_factory=list, repr=False)
 
     def get_title(self) -> str:
         return self.title
@@ -298,48 +307,100 @@ class Schedule:
         one wins) or falls outside the window, it goes to unscheduled_tasks,
         and overlaps are recorded in conflicts. Flexible tasks take the earliest
         gap that fits, or go to unscheduled_tasks. The input tasks are never
-        modified; placements are stored on this schedule.
+        modified; placements are stored on this schedule. A plain-language reason
+        for every decision is recorded as it is made (see explain()).
         """
         self.tasks = []
         self.unscheduled_tasks = []
         self.conflicts = []
+        self.unscheduled_reasons = {}
         window_start = _to_minutes(self.start_time)
         limit = _to_minutes(self.end_time)
-        due = [t for t in tasks if self.plan_date is None or t.occurs_on(self.plan_date)]
+        window = f"{self.start_time:%H:%M}-{self.end_time:%H:%M}"
+        is_due = [self.plan_date is None or t.occurs_on(self.plan_date) for t in tasks]
+        due = [t for t, ok in zip(tasks, is_due) if ok]
+        self.not_due_tasks = [t for t, ok in zip(tasks, is_due) if not ok]
         by_priority = sorted(due, key=lambda t: t.priority, reverse=True)
         busy: list[tuple[int, int, Task]] = []  # (start, end, task), kept sorted by start
 
-        def place(task: Task, start: int) -> None:
+        def place(task: Task, start: int, reason: str) -> None:
             end = start + task.duration
-            self.tasks.append(ScheduledTask(task, _from_minutes(start), _from_minutes(end)))
+            self.tasks.append(ScheduledTask(task, _from_minutes(start), _from_minutes(end), reason))
             busy.append((start, end, task))
             busy.sort(key=lambda b: b[0])
+
+        def drop(task: Task, reason: str) -> None:
+            self.unscheduled_tasks.append(task)
+            self.unscheduled_reasons[id(task)] = reason
 
         for task in (t for t in by_priority if t.fixed_start is not None):
             start = _to_minutes(task.fixed_start)
             end = start + task.duration
             if start < window_start or end > limit:
-                self.unscheduled_tasks.append(task)
+                drop(task, f"Pinned to {task.fixed_start:%H:%M} for {task.duration} min, "
+                           f"which doesn't fit inside the {window} window.")
                 continue
             clash = next((b for b in busy if start < b[1] and b[0] < end), None)
             if clash:
-                self.unscheduled_tasks.append(task)
                 self.conflicts.append((task, clash[2]))
+                drop(task, f"Pinned to {task.fixed_start:%H:%M}, but that overlaps '{clash[2].title}' "
+                           f"({_from_minutes(clash[0]):%H:%M}-{_from_minutes(clash[1]):%H:%M}), "
+                           "which has higher priority.")
             else:
-                place(task, start)
+                place(task, start, f"Pinned to {task.fixed_start:%H:%M} as requested, so it was placed first.")
 
-        for task in (t for t in by_priority if t.fixed_start is None):
+        flexible = [t for t in by_priority if t.fixed_start is None]
+        for rank, task in enumerate(flexible, start=1):
             cursor = window_start
-            for b_start, b_end, _ in busy:
+            detours: list[str] = []  # fixed tasks it had to go around because the gap was too short
+            for b_start, b_end, b_task in busy:
                 if cursor + task.duration <= b_start:
                     break
+                if b_start > cursor:
+                    detours.append(b_task.title)
                 cursor = max(cursor, b_end)
             if cursor + task.duration <= limit:
-                place(task, cursor)
+                reason = f"Priority {task.priority} (ranked {rank} of {len(flexible)} flexible task(s)), "
+                reason += "so it took the earliest free time"
+                if detours:
+                    reason += f"; the gap before '{detours[-1]}' was too short, so it goes after it"
+                place(task, cursor, reason + ".")
             else:
-                self.unscheduled_tasks.append(task)
+                drop(task, f"Needs {task.duration} min, but no free gap that long is left "
+                           f"in the {window} window.")
 
         self.tasks.sort(key=lambda p: p.start_time)
+
+    def get_reason(self, task: Task) -> str:
+        """Why this task was placed where it is, or why it was left out ('' if unknown)."""
+        placement = self.get_placement(task)
+        if placement is not None:
+            return placement.reason
+        return self.unscheduled_reasons.get(id(task), "")
+
+    def get_not_due_tasks(self) -> list[Task]:
+        """Tasks skipped because they aren't due on plan_date."""
+        return self.not_due_tasks
+
+    def explain(self) -> str:
+        """A short plain-language summary of how and why this schedule was built."""
+        day = f"{self.plan_date:%A %b %d}, " if self.plan_date else ""
+        lines = [
+            f"Planned {day}{self.start_time:%H:%M}-{self.end_time:%H:%M}: "
+            f"{len(self.tasks)} task(s) scheduled ({self.get_total_time()} min, "
+            f"{self.get_available_time()} min left)"
+            + (f", {len(self.unscheduled_tasks)} couldn't be scheduled." if self.unscheduled_tasks else "."),
+            "Tasks pinned to a time are placed first. The rest go in priority order "
+            "(highest number first), each into the earliest free gap that fits.",
+        ]
+        for p in self.get_tasks_by_time():
+            lines.append(f"- {p.start_time:%H:%M}-{p.end_time:%H:%M} {p.title}: {p.reason}")
+        for task in self.unscheduled_tasks:
+            lines.append(f"- Not scheduled: {task.title}: {self.unscheduled_reasons.get(id(task), '')}")
+        if self.not_due_tasks:
+            names = ", ".join(t.title for t in self.not_due_tasks)
+            lines.append(f"Skipped because they aren't due on this day: {names}.")
+        return "\n".join(lines)
 
 
 @dataclass

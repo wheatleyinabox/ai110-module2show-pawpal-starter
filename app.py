@@ -390,6 +390,8 @@ if schedules:
             )
         else:
             st.warning(f"Couldn't fit '{t.get_title()}' ({t.get_duration()} min) in this time window.")
+    with st.expander("Why this plan?", expanded=True):
+        st.markdown(schedule.explain())
 
 with st.expander("Week at a glance"):
     st.caption("Which tasks are due each day, starting from the 'Plan for' date.")

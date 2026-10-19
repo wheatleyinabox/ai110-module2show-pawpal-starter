@@ -57,6 +57,9 @@ def main() -> None:
     print(f"  Total time:     {schedule.get_total_time()} min")
     print(f"  Available time: {schedule.get_available_time()} min")
     print(f"  Unscheduled:    {len(schedule.get_unscheduled_tasks())}")
+    print("  Why this plan:")
+    for line in schedule.explain().splitlines():
+        print(f"    {line}")
 
     # Step 5: shrink the window to 8am-9am and regenerate; Playtime (45 min) won't fit
     schedule.set_end_time(time(9, 0))
@@ -71,6 +74,7 @@ def main() -> None:
     for task in schedule.get_unscheduled_tasks():
         print(f"    {task.get_title()} - {task.get_duration()} min "
               f"(placed: {schedule.get_placement(task) is not None})")
+        print(f"      Why: {schedule.get_reason(task)}")
 
     # Step 6: edge cases
     print("\nStep 6: Edge cases")
@@ -137,6 +141,7 @@ def main() -> None:
         print(f"  CONFLICT: {dropped.get_title()} ({dropped.get_fixed_start():%H:%M}) overlaps {blocker.get_title()}")
     for task in fixed.get_unscheduled_tasks():
         print(f"  Unscheduled: {task.get_title()}")
+        print(f"    Why: {fixed.get_reason(task)}")
 
     late = Task(title="Late-night vet", duration=30, priority=1, fixed_start=time(21, 0))
     outside = Schedule(title="Outside window")
@@ -177,6 +182,13 @@ def main() -> None:
         print(f"    {day:%a %b %d}: {items}")
         for dropped, blocker in day_plan.get_conflicts():
             print(f"        CONFLICT: {dropped.get_title()} overlaps {blocker.get_title()}")
+            print(f"        Why: {day_plan.get_reason(dropped)}")
+
+    tuesday_plan = Schedule(title="Tue", plan_date=wednesday - timedelta(days=1))
+    tuesday_plan.generate_schedule(user.get_tasks())
+    print("  Explanation for Tuesday (tasks not due that day are mentioned too):")
+    for line in tuesday_plan.explain().splitlines():
+        print(f"    {line}")
 
     print(f"  Due on {wednesday:%a}: {[t.get_title() for t in user.get_tasks_for_date(wednesday)]}")
     print(f"  Due on {wednesday:%a} for Luna: "

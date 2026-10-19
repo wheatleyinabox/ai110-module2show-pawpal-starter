@@ -506,3 +506,107 @@ def test_recurring_fixed_task_conflicts_only_on_days_both_occur():
     assert monday.get_conflicts() == [(groom, vet)]
     assert tuesday.get_conflicts() == []
     assert placed(tuesday) == [vet]
+
+
+# --- Explaining the schedule ---
+
+def test_flexible_task_reason_mentions_priority_and_rank():
+    walk = Task(title="Walk", duration=30, priority=3)
+    feed = Task(title="Feed", duration=10, priority=1)
+    schedule = make_schedule()
+    schedule.generate_schedule([feed, walk])
+    assert "Priority 3" in schedule.get_reason(walk)
+    assert "ranked 1 of 2" in schedule.get_reason(walk)
+    assert "ranked 2 of 2" in schedule.get_reason(feed)
+
+
+def test_fixed_task_reason_says_it_was_pinned():
+    vet = Task(title="Vet", duration=30, fixed_start=time(9, 0))
+    schedule = make_schedule()
+    schedule.generate_schedule([vet])
+    assert "Pinned to 09:00" in schedule.get_reason(vet)
+    assert schedule.get_tasks()[0].get_reason() == schedule.get_reason(vet)
+
+
+def test_reason_says_when_a_task_goes_around_a_fixed_task():
+    vet = Task(title="Vet", duration=30, priority=1, fixed_start=time(8, 30))
+    walk = Task(title="Walk", duration=45, priority=3)
+    schedule = make_schedule()
+    schedule.generate_schedule([vet, walk])
+    assert "gap before 'Vet' was too short" in schedule.get_reason(walk)
+
+
+def test_no_detour_note_when_task_fits_before_fixed_task():
+    vet = Task(title="Vet", duration=30, priority=1, fixed_start=time(9, 0))
+    walk = Task(title="Walk", duration=30, priority=3)
+    schedule = make_schedule()
+    schedule.generate_schedule([vet, walk])
+    assert "too short" not in schedule.get_reason(walk)
+
+
+def test_unscheduled_reasons_for_each_kind():
+    groom = Task(title="Groom", duration=60, priority=1, fixed_start=time(9, 0))
+    vet = Task(title="Vet", duration=30, priority=3, fixed_start=time(9, 30))
+    late = Task(title="Late", duration=30, fixed_start=time(19, 45))
+    huge = Task(title="Huge", duration=13 * 60, priority=1)
+    schedule = make_schedule()
+    schedule.generate_schedule([groom, vet, late, huge])
+    assert "overlaps 'Vet'" in schedule.get_reason(groom)
+    assert "doesn't fit inside the 08:00-20:00 window" in schedule.get_reason(late)
+    assert "Needs 780 min" in schedule.get_reason(huge)
+
+
+def test_reasons_reset_when_regenerating():
+    huge = Task(title="Huge", duration=13 * 60)
+    schedule = make_schedule()
+    schedule.generate_schedule([huge])
+    assert schedule.get_reason(huge)
+    schedule.set_end_time(time(23, 0))
+    schedule.generate_schedule([huge])
+    assert "Needs" not in schedule.get_reason(huge)
+    assert schedule.unscheduled_reasons == {}
+
+
+def test_get_reason_for_unknown_task_is_empty():
+    assert make_schedule().get_reason(Task(title="Nope")) == ""
+
+
+def test_not_due_tasks_are_listed_and_explained():
+    daily = Task(title="Feed", duration=10, repeat_days=ALL_DAYS)
+    bath = Task(title="Bath", duration=20, repeat_days=[1])
+    schedule = make_schedule()
+    schedule.set_plan_date(MON)
+    schedule.generate_schedule([daily, bath])
+    assert schedule.get_not_due_tasks() == [bath]
+    assert "Skipped because they aren't due on this day: Bath." in schedule.explain()
+
+
+def test_not_due_uses_identity_so_equal_tasks_are_not_both_dropped():
+    a = Task(title="Same", duration=10, repeat_days=[0])
+    b = Task(title="Same", duration=10, repeat_days=[0])
+    schedule = make_schedule()
+    schedule.set_plan_date(TUE)
+    schedule.generate_schedule([a, b])
+    assert schedule.get_not_due_tasks() == [a, b]
+    schedule.set_plan_date(MON)
+    schedule.generate_schedule([a, b])
+    assert len(schedule.get_tasks()) == 2
+
+
+def test_explain_summarises_schedule_in_clock_order():
+    vet = Task(title="Vet", duration=30, priority=1, fixed_start=time(9, 0))
+    walk = Task(title="Walk", duration=30, priority=3)
+    huge = Task(title="Huge", duration=13 * 60, priority=2)
+    schedule = make_schedule()
+    schedule.set_plan_date(MON)
+    schedule.generate_schedule([vet, walk, huge])
+    text = schedule.explain()
+    assert text.startswith("Planned Monday Jan 01, 08:00-20:00: 2 task(s) scheduled (60 min, 660 min left), 1 couldn't")
+    assert text.index("08:00-08:30 Walk") < text.index("09:00-09:30 Vet")
+    assert "Not scheduled: Huge" in text
+
+
+def test_explain_with_no_tasks():
+    schedule = make_schedule()
+    schedule.generate_schedule([])
+    assert "0 task(s) scheduled (0 min, 720 min left)." in schedule.explain()
