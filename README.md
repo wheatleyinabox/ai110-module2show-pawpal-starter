@@ -59,7 +59,10 @@ Step 4: Schedule - Today (08:00-20:00)
 
 ## 🧪 Testing PawPal+
 
-There is no pytest suite yet. For now, the scheduling behavior is checked with the guided CLI demo:
+```
+# Run the full test suite:
+pytest
+```
 
 ```bash
 python main.py

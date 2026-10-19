@@ -47,13 +47,13 @@ And using datetime library...
    - ??? : generateSchedule()
 
 - What classes did you include, and what responsibilities did you assign to each?
-See above and uml-draft.mmd!
+  See above and uml-draft.mmd!
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
-It also made the suggestion to use timedelta instead of the time object to make things easier for scheduling math. We ended up just using whole minutes instead. Frankly, I was lost on how I could hold the schedule in its entirety to then have the necessary information to display it. Like I had the time range but showing where tasks are placed and storing that wasn't making sense to me. It asked me what I wanted to help guide what kinds of attributes and data structures I might need. It helped me explore what building block would be needed for a Google Calendar type system but it felt too complex for the project so we reworked the diagram and skeleton to simplify the Schedule object class. At this stage the idea is to create a sorted list of tasks by priority and then given a time frame the user wants to use, to add tasks into the schedule. I also added start and end time attributes to Task just so they exists even if they're empty when a task is created by a User.
+  It also made the suggestion to use timedelta instead of the time object to make things easier for scheduling math. We ended up just using whole minutes instead. Frankly, I was lost on how I could hold the schedule in its entirety to then have the necessary information to display it. Like I had the time range but showing where tasks are placed and storing that wasn't making sense to me. It asked me what I wanted to help guide what kinds of attributes and data structures I might need. It helped me explore what building block would be needed for a Google Calendar type system but it felt too complex for the project so we reworked the diagram and skeleton to simplify the Schedule object class. At this stage the idea is to create a sorted list of tasks by priority and then given a time frame the user wants to use, to add tasks into the schedule. I also added start and end time attributes to Task just so they exists even if they're empty when a task is created by a User.
 
 ---
 
@@ -104,6 +104,8 @@ I checked the behavior with a guided demo script (`main.py`) instead of automate
 
 - How confident are you that your scheduler works correctly?
 - What edge cases would you test next if you had more time?
+
+For the general demo script, I didn't end up testing for 0 or negative values in duration or if tasks get a priority of 0. These would be good safeguards to test with more time!
 
 ---
 
