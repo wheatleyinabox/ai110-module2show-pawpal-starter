@@ -46,14 +46,14 @@ And using datetime library...
    - time : calcTotalTime()
    - ??? : generateSchedule()
 
-Claude helped make everything exaclty as is and suggested some changes based on the CRUD stuff I mentioned. So Claude helped add some add and remove object methods where apropriate. After reviewing it, I wanted to break up timeConstraint into two time variables instead. It did this in the attributes section, but it didn't update the methods part.
-
 - What classes did you include, and what responsibilities did you assign to each?
+See above and uml-draft.mmd!
 
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
+It also made the suggestion to use timedelta instead of the time object to make things easier for scheduling math. We ended up just using whole minutes instead. Frankly, I was lost on how I could hold the schedule in its entirety to then have the necessary information to display it. Like I had the time range but showing where tasks are placed and storing that wasn't making sense to me. It asked me what I wanted to help guide what kinds of attributes and data structures I might need. It helped me explore what building block would be needed for a Google Calendar type system but it felt too complex for the project so we reworked the diagram and skeleton to simplify the Schedule object class. At this stage the idea is to create a sorted list of tasks by priority and then given a time frame the user wants to use, to add tasks into the schedule. I also added start and end time attributes to Task just so they exists even if they're empty when a task is created by a User.
 
 ---
 
@@ -64,14 +64,20 @@ Claude helped make everything exaclty as is and suggested some changes based on 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
 
+The scheduler considers three things: the time window the user wants tasks scheduled in (a start and end time), how long each task takes (in minutes), and each task's priority. Priority decides the order and the time window decides what fits. I left out preferences like "meds at 9am sharp" to keep things simple, so every task is just placed in the next open spot.
+
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+The scheduler is greedy. It goes through tasks in priority order and puts each one right after the previous one, and if a task doesn't fit it gets skipped and listed as unscheduled. This won't always pack the day as tightly as possible, and a task can't be pinned to a specific time. It's reasonable here because it's easy to follow and explain, the result is a simple list, and the user can see exactly which tasks didn't fit.
+
 ---
 
 ## 3. AI Collaboration
+
+Claude helped make everything exactly as is and suggested some changes based on the CRUD stuff I mentioned. So Claude helped add some add and remove object methods where apropriate. After reviewing it, I wanted to break up timeConstraint into two time variables instead. It did this in the attributes section, but it didn't update the methods part. When generating the skeleton and needing to review the diagram, it actually caught some mistakes I didn't see the first time. Like there still being placeholder setters and getters and the startTime and endTime setters and getters not having the appropriate parameters and return values. But at the same time, I caught that it didn't include the accessors and mutators so we're both catching each other on things.
 
 **a. How you used AI**
 
@@ -91,6 +97,8 @@ Claude helped make everything exaclty as is and suggested some changes based on 
 
 - What behaviors did you test?
 - Why were these tests important?
+
+I checked the behavior with a guided demo script (`main.py`) instead of automated tests so far. It covers creating a user, pets and tasks, generating a schedule, a window too small for every task, and three edge cases: no tasks, a task longer than the whole window, and tasks with the same priority. These matter because they're the places where the scheduler decides what gets dropped or what order things come in.
 
 **b. Confidence**
 
