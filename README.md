@@ -62,6 +62,18 @@ Step 4: Schedule - Today (08:00-20:00)
 ```
 # Run the full test suite:
 pytest
+
+# Pytest Output
+platform darwin -- Python 3.13.0, pytest-9.1.1, pluggy-1.7.0
+rootdir: /Users/Wheatley/Desktop/AI110/ai110-module2show-pawpal-starter
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.15.1
+collected 22 items                                                                                                                      
+
+tests/test_pawpal.py ......................                                                                                       [100%]
+
+========================================================== 22 passed in 0.02s ===========================================================
 ```
 
 ```bash
