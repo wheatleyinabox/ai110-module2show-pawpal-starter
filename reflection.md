@@ -60,7 +60,7 @@ And using datetime library...
 - Start and end times moved off `Task`. Storing them on the task meant a second schedule overwrote the first one's times, and a recurring task would only have had one time for every day. Now `generate_schedule` stores each placement in a `ScheduledTask` (task + start + end) on the schedule and never modifies the task.
 - `Task` gained `fixed_start` (pin it to a time), `repeat_days` and `on_date` (recurrence). `Schedule` gained `plan_date` (the day it is for) and `conflicts`.
 - Priority now means a higher number is scheduled first. The docstring already said that, but the code sorted the other way, so I fixed the code and flipped the priority numbers in the app, demo script and tests.
-- The UML in `diagrams/uml-draft.mmd` still shows the original design and hasn't been updated to match yet.
+- I updated the UML in `diagrams/uml-draft.mmd` at the end so it matches the code (the new `ScheduledTask` class, the new fields and methods, and the snake_case method names the code uses). It was drawn before the code existed, so it had drifted.
 - Schedules can now explain themselves. I wasn't sure there was an efficient way to do that, but the scheduler already knows why it makes each choice at the moment it makes it, so it writes a short reason down then (on each `ScheduledTask`, and for each unscheduled task) and `Schedule.explain()` strings them into a summary. That costs nothing extra and the explanation can't drift from what the scheduler actually did.
 
 ---

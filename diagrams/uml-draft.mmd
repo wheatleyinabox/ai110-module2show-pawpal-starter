@@ -6,24 +6,26 @@ classDiagram
         +List~Task~ tasks
         +List~Pet~ pets
         +List~Schedule~ schedules
-        +getUsername() str
-        +setUsername(username: str) void
-        +getEmail() str
-        +setEmail(email: str) void
-        +getPassword() str
-        +setPassword(password: str) void
-        +getTasks() List~Task~
-        +setTasks(tasks: List~Task~) void
-        +getPets() List~Pet~
-        +setPets(pets: List~Pet~) void
-        +getSchedules() List~Schedule~
-        +setSchedules(schedules: List~Schedule~) void
-        +addTask(task: Task) void
-        +removeTask(task: Task) void
-        +addPet(pet: Pet) void
-        +removePet(pet: Pet) void
-        +addSchedule(schedule: Schedule) void
-        +removeSchedule(schedule: Schedule) void
+        +get_username() str
+        +set_username(username: str) None
+        +get_email() str
+        +set_email(email: str) None
+        +get_password() str
+        +set_password(password: str) None
+        +get_tasks() List~Task~
+        +set_tasks(tasks: List~Task~) None
+        +get_tasks_for_date(day: date) List~Task~
+        +get_tasks_for_pet(pet: Pet) List~Task~
+        +get_pets() List~Pet~
+        +set_pets(pets: List~Pet~) None
+        +get_schedules() List~Schedule~
+        +set_schedules(schedules: List~Schedule~) None
+        +add_task(task: Task) None
+        +remove_task(task: Task) None
+        +add_pet(pet: Pet) None
+        +remove_pet(pet: Pet) None
+        +add_schedule(schedule: Schedule) None
+        +remove_schedule(schedule: Schedule) None
     }
 
     class Task {
@@ -32,66 +34,124 @@ classDiagram
         +int duration
         +int priority
         +List~Pet~ pets
-        +time startTime
-        +time endTime
-        +getTitle() str
-        +setTitle(title: str) void
-        +getDesc() str
-        +setDesc(desc: str) void
-        +getStartTime() time
-        +getEndTime() time
-        +getDuration() int
-        +setDuration(duration: int) void
-        +getPriority() int
-        +setPriority(priority: int) void
-        +getPets() List~Pet~
-        +setPets(pets: List~Pet~) void
-        +addPet(pet: Pet) void
-        +removePet(pet: Pet) void
+        +Optional~time~ fixed_start
+        +List~int~ repeat_days
+        +Optional~date~ on_date
+        +get_title() str
+        +set_title(title: str) None
+        +get_desc() str
+        +set_desc(desc: str) None
+        +get_fixed_start() Optional~time~
+        +set_fixed_start(fixed_start: Optional~time~) None
+        +get_repeat_days() List~int~
+        +set_repeat_days(repeat_days: List~int~) None
+        +get_on_date() Optional~date~
+        +set_on_date(on_date: Optional~date~) None
+        +is_recurring() bool
+        +occurs_on(day: date) bool
+        +describe_repeat() str
+        +get_duration() int
+        +set_duration(duration: int) None
+        +get_priority() int
+        +set_priority(priority: int) None
+        +get_pets() List~Pet~
+        +set_pets(pets: List~Pet~) None
+        +add_pet(pet: Pet) None
+        +remove_pet(pet: Pet) None
     }
 
     class Pet {
         +str name
         +str breed
         +str age
-        +str healthConditions
+        +str health_conditions
         +str medications
-        +getName() str
-        +setName(name: str) void
-        +getBreed() str
-        +setBreed(breed: str) void
-        +getAge() str
-        +setAge(age: str) void
-        +getHealthConditions() str
-        +setHealthConditions(healthConditions: str) void
-        +getMedications() str
-        +setMedications(medications: str) void
+        +get_name() str
+        +set_name(name: str) None
+        +get_breed() str
+        +set_breed(breed: str) None
+        +get_age() str
+        +set_age(age: str) None
+        +get_health_conditions() str
+        +set_health_conditions(health_conditions: str) None
+        +get_medications() str
+        +set_medications(medications: str) None
+    }
+
+    class ScheduledTask {
+        +Task task
+        +time start_time
+        +time end_time
+        +str reason
+        %% read-only properties that pass through to task
+        +str title
+        +int duration
+        +int priority
+        +List~Pet~ pets
+        %% --- %%
+        +get_task() Task
+        +get_reason() str
+        +get_start_time() time
+        +get_end_time() time
+        +get_title() str
+        +get_desc() str
+        +get_duration() int
+        +get_priority() int
+        +get_pets() List~Pet~
     }
 
     class Schedule {
         +str title
         +str desc
-        +time startTime
-        +time endTime
-        +List~Task~ tasks
-        +List~Task~ unscheduledTasks
-        +getTitle() str
-        +setTitle(title: str) void
-        +getDesc() str
-        +setDesc(desc: str) void
-        +getStartTime() time
-        +setStartTime(startTime : time) void
-        +getEndTime() time
-        +setEndTime(endTime : time) void
-        +getTotalTime() int
-        +getAvailableTime() int
-        +getTasks() List~Task~
-        +getUnscheduledTasks() List~Task~
-        +generateSchedule(tasks: List~Task~) void
+        +time start_time
+        +time end_time
+        +List~ScheduledTask~ tasks
+        +List~Task~ unscheduled_tasks
+        +List~Tuple~Task,Task~~ conflicts
+        +Optional~date~ plan_date
+        +Dict~int,str~ unscheduled_reasons
+        +List~Task~ not_due_tasks
+        +get_title() str
+        +set_title(title: str) None
+        +get_desc() str
+        +set_desc(desc: str) None
+        +get_start_time() time
+        +set_start_time(start_time: time) None
+        +get_end_time() time
+        +set_end_time(end_time: time) None
+        +get_total_time() int
+        +get_available_time() int
+        +get_tasks() List~ScheduledTask~
+        +get_unscheduled_tasks() List~Task~
+        +get_plan_date() Optional~date~
+        +set_plan_date(plan_date: Optional~date~) None
+        +get_conflicts() List~Tuple~Task,Task~~
+        +get_tasks_by_time() List~ScheduledTask~
+        +get_tasks_for_pet(pet: Pet) List~ScheduledTask~
+        +get_placement(task: Task) Optional~ScheduledTask~
+        +sort_tasks_by_time(tasks: List~Task~) List~Task~
+        +generate_schedule(tasks: List~Task~) None
+        +get_reason(task: Task) str
+        +get_not_due_tasks() List~Task~
+        +explain() str
+    }
+
+    class helpers {
+        <<module functions>>
+        +ALL_DAYS List~int~
+        +WEEKDAY_NAMES List~str~
+        +filter_by_pet(tasks: list, pet: Pet) list
+        +_to_minutes(t : time) int
+        +_from_minutes(minutes : int) time
     }
 
     User "1" --> "*" Task : has
     User "1" --> "*" Pet : has
     User "1" --> "*" Schedule : has
-    Schedule "1" o-- "*" Task : contains
-    Task "*" --> "*" Pet : contains
+    Task "*" --> "*" Pet : involves
+    Schedule "1" *-- "*" ScheduledTask : placements
+    ScheduledTask "*" --> "1" Task : wraps
+    Schedule "1" ..> "*" Task : unscheduled, not due, conflicts
+    helpers ..> Task : filters
+    helpers ..> ScheduledTask : filters
+    helpers ..> Pet : by
