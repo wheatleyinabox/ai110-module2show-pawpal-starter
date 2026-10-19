@@ -183,5 +183,3 @@ Steps 4, 5, 8 and 9 also print the scheduler's reasons for what it did.
 - The scheduler doesn't reject zero or negative durations or an end time before the start time (the app form limits duration to 1-240 minutes).
 - A conflict drops the lower-priority fixed task instead of suggesting a new time for it.
 - Recurring tasks have no "done" state or end date yet.
-
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
