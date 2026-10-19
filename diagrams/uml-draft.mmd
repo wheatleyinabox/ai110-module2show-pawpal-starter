@@ -29,15 +29,19 @@ classDiagram
     class Task {
         +str title
         +str desc
-        +time duration
+        +int duration
         +int priority
         +List~Pet~ pets
+        +time startTime
+        +time endTime
         +getTitle() str
         +setTitle(title: str) void
         +getDesc() str
         +setDesc(desc: str) void
-        +getDuration() time
-        +setDuration(duration: time) void
+        +getStartTime() time
+        +getEndTime() time
+        +getDuration() int
+        +setDuration(duration: int) void
         +getPriority() int
         +setPriority(priority: int) void
         +getPets() List~Pet~
@@ -69,28 +73,21 @@ classDiagram
         +str desc
         +time startTime
         +time endTime
-        +time totalTime
-        +time availableTime
         +List~Task~ tasks
+        +List~Task~ unscheduledTasks
         +getTitle() str
         +setTitle(title: str) void
         +getDesc() str
         +setDesc(desc: str) void
         +getStartTime() time
-        +setStartTime() time
+        +setStartTime(startTime : time) void
         +getEndTime() time
-        +setEndTime() time
-        +getTotalTime() time
-        +setTotalTime(totalTime: time) void
-        +getAvailableTime() time
-        +setAvailableTime(availableTime: time) void
+        +setEndTime(endTime : time) void
+        +getTotalTime() int
+        +getAvailableTime() int
         +getTasks() List~Task~
-        +setTasks(tasks: List~Task~) void
-        +addTask(task: Task) void
-        +removeTask(task: Task) void
-        +calcTimeAvailable() time
-        +calcTotalTime() time
-        +generateSchedule() void
+        +getUnscheduledTasks() List~Task~
+        +generateSchedule(tasks: List~Task~) void
     }
 
     User "1" --> "*" Task : has
